@@ -1,0 +1,639 @@
+*fte.txt*	Feral Template Expansion
+		Documtation version 0.4
+\date		Sun, 18 May 2003 22:00 Pacific Daylight Time
+\version	$Id$
+
+For instructions on installing this file, type
+	:help add-local-help
+inside Vim.
+
+{Vi does not have any of this}
+
+[Feral:138/03@21:56] Note: !! Please forgive this hastily written/edited and
+possibly eronious help! If something here is wrong, please feel free to point
+it out in an email to me(Robert KellyIV <Sreny@SverGbc.Pbz> (Rot13ed) ).
+
+==============================================================================
+							*fte-overview*
+Overview:~
+Pompous name and intent aside, this is ment to be the end all template
+expansion system for VIM (v6.0 and above)
+
+In my mind VIM lacks very few things. A Template method being one of them,
+this is an attempt to remady that.
+
+Feral, Wed Oct 16 PDT 2002
+
+By copious use of comments, checkbox lines and raidobutton banks you can get a
+pretty good api assistant type thing with this as well. [Feral:291/02@22:35]
+
+[Feral:303/02@10:03] Note: you know, vts (vim template system) is probably a
+better name
+
+==============================================================================
+							*fte-stage1* *fte-1*
+Stage 1:~
+	Enter the template construct into the file.
+	(what constitues a template will be discused below)
+
+This can be acomplished via DrChip's CStubs, a :read, a :put, a iabbr ... ANY
+method you like to insert text.
+
+This is ment to be the most flexable stage. You can insert the template how
+YOU want to insert the template.
+
+My prefered method is DrChip's CStubs to do a :read .. this allows me to
+memset` and get my template which is easy to change and update on the fly. I
+also use the CodeFrag menu entries fairly often.
+
+NOTE: the codefrag menu.vim needs documented and stuff. -- it is separate
+however and should not be documented here.... It's optional! :)
+TODO list the vimscript# of codefragments_menu.vim
+
+See also |fte-flt| |fte-flti| below.
+
+==============================================================================
+							*fte-stage2* *fte-2*
+Stage 2:~
+	Fill in the template, depending on the template this can be optional.
+
+The premise is that the template should provide as much infomation as you
+could get with a GUI dialog (documtation, checkboxes, raido boxes, edit
+fields, etc.) Or, just simplify the creation of a complex code construct
+
+HINT: use a mark/got mark method for easy navagation for your templates
+
+------------------------------------------------------------------------------
+							*fte-documtation*
+	Documtation~
+Documtation is provided by lines starting with 'FTE:' being removed during
+template expansion |fte-stage3|. This is VERY similar to how a CVS commit
+works and is indeed where the idea came from.
+Example:~
+>
+	FTE:This text is a comment.
+	FTE: as is this text..
+	FTE: As much as you want with whatever information you want.
+
+------------------------------------------------------------------------------
+								*fte-checkbox*
+	Checkboxes~
+
+Checkboxes are acomplished via specially formated 'FTE:[ ]<register>:<text>'
+lines, where <register> is a normal VIM register [a-zA-Z] and <text> is the
+text you want to place into <register> if the checkbox is on.  Uppercase
+registers are just as in VIM, they append <text> to the specified register.
+
+If the checkbox is off (whitespace between the brackets) then the line is
+treated the same as documtation, it does nothing, is not processed and is
+deleted when the template is expanded.
+
+
+NOTE: Any non whitespace char is supported to denote an on checkbox, 'X' is
+used as default.
+
+Example-ON:~
+>
+	FTE:[X]a:text
+This would place "text" into register a
+
+Example-OFF:~
+>
+	FTE:[ ]a:text
+While this would do nothing and is considered a comment and removed.
+
+Example:~
+>
+	FTE:[X]A:text
+This would APPEND "text" to register a
+>
+	FTE:[ ]A:text
+While this is treated as a comment as it is off.
+
+
+To ease toggling the checkbox line on and off a function is provided
+|Feral_TogglePromptLine()| and is mapped (with NO grace currently to
+<leader><F4>)
+
+
+NOTE: currently the register is dirtied, what is put into the register during
+|fte-stage3| is left in the register. This is by design to allow faster
+template entry. You can preserve register contents with a SaveRegs line, see
+something (TODO COMBAK, but for a quickie, place the following FTE:SaveRegs:
+line in your template near the top, think it needs to be near the top anyway.)
+>
+	FTE:SaveRegs:
+
+
+Example:~
+
+You can use a specific register for the class name in multiple templates. This
+allows for the user to toggle the line off vs reentering the class name again.
+This results in fewer keystrokes, although would seem to be error prone.
+
+NOTE: Mayhaps there is a better way to go about this. Works well enough
+though, I use e,r,t, d,f,g, and c,v,b for tempalte registers.
+
+[Feral:138/03@19:24] By the by I ocasionally wonder if this is a design flaw.
+Eventually I'd like to make a preferance flag that makes saving regs the
+default and introduce a FTE:DirtyRegs: type flag line to force dirtying.
+
+------------------------------------------------------------------------------
+							*fte-raidobuttons*
+	Raidobuttons~
+
+Raidobuttons are accomplished in a way similar to checkboxes, save they
+require a raidobuttonbank which is denoted by 'FTE:RAIDO_PROMPT_START' at the
+start of a line to start the bank, and 'FTE:RAIDO_PROMPT_END' at the start of
+a line to end the bank.
+
+Example:~
+>
+	FTE: Which sprintf do you actually want?
+	FTE:RAIDO_PROMPT_START
+	FTE:( )b:_stprintf
+	FTE:(*)b:sprintf
+	FTE:( )b:sprintf
+	FTE:( )b:swprintf
+	FTE:RAIDO_PROMPT_END
+
+The provided |Feral_TogglePromptLine()| function transparently handles these
+raidobutton banks and properly only allows one entry to be on.
+
+NOTE That it is valid to have comment lines in the raido button bank. I.e.
+Example:~
+>
+	FTE: Which sprintf do you actually want?
+	FTE:RAIDO_PROMPT_START
+	FTE: TChar
+	FTE:( )b:_stprintf
+	FTE: normal
+	FTE:(*)b:sprintf
+	FTE:duh another normal? pointless
+	FTE:( )b:sprintf
+	FTE: wide
+	FTE:( )b:swprintf
+	FTE:RAIDO_PROMPT_END
+Works fine, but tends to be a pain to toggle the checkbox lines. (coloring is
+needed!)
+
+An easier way is to use checkbox comments, described in
+|fte-checkbox-comments|.
+Example:~
+>
+	FTE: Which sprintf do you actually want?
+	FTE:RAIDO_PROMPT_START
+	FTE:( )b:_stprintf		FTE: TChar
+	FTE:(*)b:sprintf		FTE: normal
+	FTE:( )b:sprintf		FTE:duh another normal? pointless
+	FTE:( )b:swprintf		FTE: wide
+	FTE:RAIDO_PROMPT_END
+
+
+------------------------------------------------------------------------------
+							*fte-checkbox-comments*
+	Checkbox comments~
+
+To facilitate commenting checkboxes and in particular raido button banks one
+can place '<One_Or_More_WhiteSpace>FTE: comment text' after the text to
+provide documtation. Note that the whitespace (<Space> and <Tab> see: |/\s|)
+leading up to the second FTE: are eaten, if this causes problems don't use
+these inline comments place the comments after or before your checkbox.
+
+Example:~
+>
+	FTE:[X]b:_stprintf		FTE: TCHAR.H routine
+This would place "_stprintf" into register b
+
+
+Example: (Illistration of limitation)~
+If you want to include trailing spaces/tabs in the text you will need to place
+your comments after or before the checkbox line as a normal comment (^FTE:
+your comment text). I.e.
+>
+	FTE:[X]b:I want this trailing space!  		FTE: Trailing spaces wil be eaten!
+This would place "I want this trailing space!" into register b
+>
+	FTE: As I want the trailing spaces the comment must go on this line.
+	FTE:[X]b:I want this trailing space!  
+
+This would place "I want this trailing space!  " into register b
+
+NOTE: '\s\+FTE:.*$' Is the pattern that matches the comment.
+
+
+==============================================================================
+						*fte-stage3* *fte-3* *:FTE*
+Stage 3: ~
+	Template Expansion
+
+
+Templates are expanded by executing the command :FTE with a line range,
+defaulting to the current line (which will only process templates in the
+current line)
+
+To ease finding the line range a function is provided to Find the temaplte and
+execute :FTE on that line range; This function relies on special markers much
+like the raido button bank markers, to start a template. The start marker is
+'FTE: --------------------- SO: feral-template pass 1 ---------------------'
+and the end marker is:
+'FTE: --------------------- EO: feral-template pass 1 ---------------------'
+
+NOTE: I wonder if it is actually pass one heh. [Feral:289/02@02:13]
+[Feral:291/02@22:01] It is placed in stage one so yes.
+
+Using this method one does not have to worry about line ranges as the
+|FeralFindAndExpandTemplate()| command will find (via searching backwards for
+the start marker then searching forwards from that point for the end marker)
+and execute :FTE on the template range.
+
+Note however you can still select your range (manually or some other command)
+and invoke :FTE manually. (if you want to process a sub portion of the
+template for instance)
+
+NOTE: [Feral:291/02@22:12] DEV: Another possible method of this would be the
+start and end are denoted by lines that do not start with FTE: Possibly that
+would be better, less confusing. THen again the current long lines separate
+the template from the surrounding code pretty well, which is good. Comments
+welcome of course.
+
+NOTE There is no command for FeralFindAndExpandTemplate(), there should be.
+TODO call is FTEF or FFT or FTEFE or well something. (=
+
+
+==============================================================================
+*Feral_TogglePromptLine()*
+
+Handles single line and raido bank lines.
+
+Simply toggles a check box line on or off, or a raido bank.
+
+NOTE: There is no command for this.. there should be. TODO Call it :FTETP
+
+
+==============================================================================
+*FeralFindAndExpandTemplate()*
+
+command will find and execute :FTE on the found template range, denoted by:
+
+The start marker:
+'FTE: --------------------- SO: feral-template pass 1 ---------------------'
+and the end marker:
+'FTE: --------------------- EO: feral-template pass 1 ---------------------'
+
+NOTE these must be placed at the start of line, no indenting is allowed and
+the single quotes are only for example.
+
+Example #4 from the |fte-example-template-file| section.~
+FTE: --------------------- SO: feral-template pass 1 ---------------------
+FTE:[X]e:«Var Name?»		FTE: Pointer to destination.
+memset(«@e», 0, sizeof(«@e»));
+FTE: --------------------- EO: feral-template pass 1 ---------------------
+
+
+==============================================================================
+							*fte-flt* *fte-flti*
+
+These are commands to load a template and place the template marker lines
+automatically.
+
+
+Think of :FLT as :read for templates. :FLTI is used for indenting the non FTE:
+lines of the read template (see below). Both :FLT and :FLTI support file name
+completion.
+
+NOTE that FLTI is deprecated. don't get partial to it at this time
+(unless you say you like it that is ;) ) Instead, in your templates use:
+>
+	FTE:Indent:
+
+
+Example:~
+Given:
+>
+	:FLT ~/codefrags/memset.cpp
+
+Results in: (basicaly)
+>
+	FTE: --------------------- SO: feral-template pass 1 ---------------------
+	:read ~/codefrags/memset.cpp
+	FTE: --------------------- EO: feral-template pass 1 ---------------------
+
+As mentioned above, :FLTI is :FLT with indent support. This is usefull in any
+situation where you want to specify the indent (which is actually just a
+string prepending to lines NOT containing ^FTE: IN the loaded file. I.e. adds
+spaces to the code you are trying to insert. The indent string is the LAST
+string of the :FLTI command line. (i.e. last <f-args> param)
+
+This is deprecated:~
+Instead, in your templates use:
+>
+	FTE:Indent:
+
+
+Example:~
+Given:
+>
+	:FLTI ~/codefrags/memset.cpp \t
+
+Results in: (basicaly)
+>
+	FTE: --------------------- SO: feral-template pass 1 ---------------------
+	:read ~/codefrags/memset.cpp
+	FTE: --------------------- EO: feral-template pass 1 ---------------------
+An the non FTE: lines that are read will have "\t" inserted at ^ (start of
+line)
+
+
+Example:~
+:FLT
+>
+	:FLT ~/code frags/memset.cpp
+:FLTI
+>
+	:FLTI ~/code frags/memset.cpp \t
+
+
+==============================================================================
+							*fte-template-flags*
+
+There are currently two flags that specify how FTE should operate for this
+template.
+
+Details:~
+------------------------------------------------------------------------------
+Indent (via normal! == for each line) the template? (If not present then no
+indenting is done)
+>
+	FTE:Indent:
+i.e.~
+>
+	TODO
+
+------------------------------------------------------------------------------
+
+Save register contents? (if not present specified (in checkbox/raido banks)
+registers are overwritten)
+>
+	FTE:saveregs:
+i.e.~
+>
+	TODO
+
+------------------------------------------------------------------------------
+
+TODO some form of (.vimrc) default option for this;
+
+
+==============================================================================
+							*fte-template-expressions*
+
+There are two ways to evaluate and execute script code, both directly inspired
+by Luc's version of mu-template.
+
+Details:~
+------------------------------------------------------------------------------
+NOTE Directly inspred Luc's version of mu-template.
+>
+	¡expression to evaluate and insert as text¡
+i.e.~
+>
+	TODO
+
+------------------------------------------------------------------------------
+NOTE Directly inspred Luc's version of mu-template.
+>
+	¿expression to execute¿
+	«:expression to execute»
+i.e.~
+>
+	TODO
+
+
+==============================================================================
+							*fte-template-markers*
+
+NOTE: You can use whatever marker method (jump to a location) you like. (my
+examples use a «my text» method, do not confuse this with the template
+markers which will be expanded during template expansion |fte-stage3|
+
+NOTE I am open to suggestions on how these should look. The existing methods
+mu-template and the like were considered but deamed too hard to type or some
+such. Thought ¿FILE¿ does not seem all that hard. ¡FILE¡ WOuld templates like
+the previous cause problems with spanish writing people? (are there other
+languages that use ¡ and ¿ ?) Again, I'm open to suggestions here.
+[Feral:291/02@22:24]
+
+Valid template markers are: (quick ref)~
+>
+	«CURSOR»			|fte-«CURSOR»|
+	«FILE»				|fte-«FILE»|
+	«FILE_EXT»			|fte-«FILE_EXT»|
+	«INCLUDE_GATE»			|fte-«INCLUDE_GATE»|
+	«@<register>»			|fte-«@<register>»|
+	«g:<global_var>»		|fte-«g:<global_var>»|
+	«TS:<format_string>»		|fte-«TS:<format_string>»|
+
+Details:~
+------------------------------------------------------------------------------
+*fte-«CURSOR»*
+>
+	«CURSOR»
+
+Places the cursor at this location, the «CURSOR» marker is removed.
+
+------------------------------------------------------------------------------
+*fte-«FILE»*
+Expansion method based on templatefile.vim 1.5
+>
+	«FILE»
+Insert the file name only.
+i.e.~
+>
+	fte
+
+------------------------------------------------------------------------------
+*fte-«FILE_EXT»*
+Expansion method based on templatefile.vim 1.5
+>
+	«FILE_EXT»
+Insert the file name and extension only.
+i.e.~
+>
+	fte.txt
+
+------------------------------------------------------------------------------
+*fte-«INCLUDE_GATE»*
+Expansion method based on templatefile.vim 1.5
+>
+	«INCLUDE_GATE»
+Insert a #define style only include the file once type of thing. The contents
+of this depend on the file name and extension.
+i.e.~
+>
+	macHeader_FTE_txt
+
+------------------------------------------------------------------------------
+*fte-«@<register>»*
+Expansion method based on mu-template.vim 0.11
+>
+	«@<register>»
+i.e.~
+>
+	:let @t = "This message says nothing."
+	«@t»
+	This message says nothing.
+
+------------------------------------------------------------------------------
+*fte-«g:<global_var>»*
+Expansion method based on mu-template.vim 0.11
+>
+	«g:<global_var>»
+Insert a global variable
+i.e.~
+>
+	«g:fullid»
+	Robert KellyIV <Sreny@SverGbc.Pbz> (Rot13ed)
+
+------------------------------------------------------------------------------
+*fte-«TS:<format_string>»*
+Expansion method based on mu-template.vim 0.11
+>
+	«TS:<format_string>»
+Insert a time stamp, basicaly just <c-r>=strftime(<format_string>)
+i.e.~
+>
+	«TS:%Y»
+	2002
+
+NOTE: Mayhaps there should be a builtin RFC822 time stamp.
+
+
+
+==============================================================================
+						*fte-howto-apiassistant*
+
+How to use this as an api-assistant:~
+
+Using this as an api assistant (to help you fill in params of api functions)
+is basicaly built in. Just comment your template file well and provide some
+examples, the |fte-example-template-file| is a prime example.
+
+
+==============================================================================
+							*fte-howto-drchip*
+
+Example from my copy of DrChip's CStubs:~
+>
+	"mems[et]
+	elseif match(wrd, '\c\<mems\%[et]\>') > -1
+		let Word_Line = line(".")
+		exe "norm! diw"
+		execute ":FLTI ~/codefrags/crt/memset-crt.cpp ".escape(getline("."), " \t")
+		exe "normal! ".Word_Line."Gdd``"
+		unlet Word_Line
+
+
+NOTE: This needs to be cleaner... At least a little bit!
+
+==============================================================================
+						*fte-example-template-file*
+Example Template File:~
+
+
+Example #1 sprintf (from MSDEV's help):~
+FTE: -- FILE HEADER INFO REMOVED --
+FTE:
+FTE: Write formatted data to a string.
+FTE:
+FTE:[X]e:«Destination buffer--Storage location for output»
+FTE:[X]r:"«Format string, what you want in @e -- Format-control string»"
+FTE:[X]t:, «arguments -- Optional arguments»
+FTE: «» Which sprintf do you actually want?
+FTE:RAIDO_PROMPT_START
+FTE:( )b:_stprintf			FTE: TCHAR.H routine
+FTE:(*)b:sprintf			FTE: _UNICODE & _MBCS not defined
+FTE:( )b:sprintf			FTE: _MBCS defined
+FTE:( )b:swprintf			FTE: _UNICODE defined
+FTE:RAIDO_PROMPT_END
+«@b»(«@e», «@r»«@t»);
+FTE:
+FTE: Prototype:
+FTE: int sprintf(
+FTE:   char *buffer,
+FTE:   const char *format [,
+FTE:   argument] ...
+FTE: );
+FTE:
+FTE:Return Value:
+FTE: sprintf returns the number of bytes stored in buffer, not counting the terminating null character.
+FTE: swprintf returns the number of wide characters stored in buffer, not counting the terminating null wide character.
+FTE:
+FTE:Requirements
+FTE:Routine		Required header			Compatibility
+FTE:sprintf		<stdio.h>			ANSI, Win 98, Win Me, Win NT, Win 2000, Win XP
+FTE:swprintf		<stdio.h> or <wchar.h>		ANSI, Win 98, Win Me, Win NT, Win 2000, Win XP
+FTE:
+FTE: --VIM MODE LINE REMOVED--
+
+
+Example #2 memset (from MSDEV's help):~
+FTE: -- FILE HEADER INFO REMOVED --
+FTE:
+FTE: Sets buffers to a specified character.
+FTE:
+FTE: Default method
+FTE:[X]e:«Var Name?»		FTE: Pointer to destination.
+FTE:[X]r:0			FTE: Character to set.
+memset(«@e», «@r», sizeof(«@e»));
+FTE:
+FTE: Other method.
+FTE:[ ]e:«dest -- Pointer to destination.»
+FTE:[ ]r:«c -- Character to set.»
+FTE:[ ]t:«count -- Number of characters.»
+FTE:memset(«@e», «@c», «@t»);
+FTE:
+FTE:
+FTE:Prototype:
+FTE:void *memset(
+FTE:   void *dest,
+FTE:   int c,
+FTE:   size_t count
+FTE:);
+FTE:wchar_t *wmemset(
+FTE:   wchar_t *dest,
+FTE:   wchar_t c,
+FTE:   size_t count
+FTE:);
+FTE:
+FTE:Return Value:
+FTE:The value of dest.
+FTE:
+FTE:Remarks:
+FTE:Sets the first count bytes of dest to the character c.
+FTE:
+FTE:Requirements:
+FTE:Function		Required header			Compatibility
+FTE:memset		<memory.h> or <string.h>	ANSI, Win 98, Win Me, Win NT, Win 2000, Win XP
+FTE:wmemset		<wchar.t>			ANSI, Win 98, Win Me, Win NT, Win 2000, Win XP
+FTE:
+FTE: --VIM MODE LINE REMOVED--
+
+
+Example #3 memset (short version):~
+FTE: -- FILE HEADER INFO REMOVED --
+FTE:
+FTE:[X]e:«Var Name?»		FTE: Pointer to destination.
+FTE:[X]r:0			FTE: Character to set.
+memset(«@e», «@r», sizeof(«@e»));
+FTE:
+FTE: --VIM MODE LINE REMOVED--
+
+
+Example #4 memset (really short version):~
+FTE:[X]e:«Var Name?»		FTE: Pointer to destination.
+memset(«@e», 0, sizeof(«@e»));
+
+==============================================================================
+vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl
+EOF

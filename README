@@ -1,0 +1,32 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=648
+
+This is similar in concept to Gergely Kontra's mu-template (VIMSCRIPT#222), I referenced Luc Hermitte's version mostly, fyi. Save that the loading and expanding are two SEPERATE functions. This is deliberate so that you can load how you like (or even expand how you like) Note also that it is a 3 stage process (load, modify, expand) to expand a template from start to finish. This is also deliberate please see the comments at start of the script file and the included vim style help file.
+
+Note: Bits and pieces and ideas and sniplets from templatefile.vim 1.5 and mu-template.vim 0.11, many thanks to the authors of those two scripts.
+
+The major reasons to use this template method vs others (or in addition to others) is that you can load the template where and when and how you want, and you have FULL editing ability when editing the template. You can also use this as a sort of API assistant*(seebelow)
+
+
+In short you can load a template with:
+:FLT ~/codefrags/memset.cpp
+
+make your changes and then (with your cursor in the template)
+:FTE
+
+This can be used as a sort of API assistant (when the template files have copious comments), or as a more traditional template expander.
+
+Template files can have comments (lines starting with FTE:), checkboxes and raido button banks. (see inclueded help file for more details).
+
+You retain FULL VIM editing abilites (save your file and come back, compleation, etc.) while editing your templates (step#2).
+
+Currently you can toggle a checkbox or radiobutton via <leader>f4 and expand the template via <leader>f3. Unfortunatly there is next to no grace in these mappings nor proper  cmds (yet) for toggle prompt line (<leader>f4). Also todo is <plug> stuffs.
+
+This is a work in progress that I've run out of time with currently. It works (and works well, if a touch quirky in places) and no known bugs, though with unpatched 6.1 I had a (very) weird undo bug but that has disapeared with 6.1.200. Far as I know it was a internal VIM critter, now fixed. Gimmie feedback to encourage support/updates for this ;) .. It currently works well enough for my uses.
+
+Also included in zip is a codefragments menu (codefragments_menu.vim) I hacked out of Geoff Reedy's colormenu.vim. It is a method to load templates (and can be used completely separate from FTE if you so choose.).
+
+
+Zip file made with winzip if it is of any relivance.
+
+*I define an api assistant as a dialog box that helps you fill in params for a complex (or annoying) functions (win32 messagebox for instance). With FTE it is text based but you have fake/functional checkboxes and radio buttons.
+
